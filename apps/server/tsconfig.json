@@ -3,7 +3,7 @@
   "compilerOptions": {
     "noEmit": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*", "cloudflare-env.d.ts"]
     },
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx"

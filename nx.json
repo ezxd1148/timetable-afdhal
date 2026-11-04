@@ -49,5 +49,6 @@
     "destroy": {
       "cache": false
     }
-  }
+  },
+  "analytics": true
 }
