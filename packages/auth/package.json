@@ -1,0 +1,20 @@
+{
+  "name": "@timetable-afdhal/auth",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@timetable-afdhal/db": "workspace:*",
+    "better-auth": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@timetable-afdhal/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

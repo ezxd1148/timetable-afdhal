@@ -1,0 +1,46 @@
+{
+  "name": "timetable-afdhal",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "nx run-many -t dev",
+    "build": "nx run-many -t build",
+    "check-types": "nx run-many -t check-types",
+    "dev:web": "nx run-many -t dev:bare --projects=web",
+    "dev:server": "nx run-many -t dev:bare --projects=hono",
+    "db:generate": "nx run-many -t db:generate --projects=@timetable-afdhal/db",
+    "db:migrate": "nx run-many -t db:migrate --projects=@timetable-afdhal/db",
+    "deploy": "nx run-many -t deploy --projects=@timetable-afdhal/infra",
+    "destroy": "nx run-many -t destroy --projects=@timetable-afdhal/infra",
+    "env:generate": "varlock codegen --path ./apps/web/ && varlock codegen --path ./apps/server/ && varlock codegen --path ./packages/db/",
+    "postinstall": "varlock codegen --path ./apps/web/ && varlock codegen --path ./apps/server/ && varlock codegen --path ./packages/db/",
+    "check": "oxlint && oxfmt --write",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
+    "@timetable-afdhal/config": "workspace:*",
+    "@types/node": "catalog:",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "nx": "^24.0.1",
+    "oxfmt": "^0.74.0",
+    "oxlint": "^1.87.0",
+    "typescript": "catalog:",
+    "varlock": "catalog:"
+  },
+  "lint-staged": {
+    "*": [
+      "oxlint",
+      "oxfmt --write"
+    ]
+  },
+  "packageManager": "pnpm@12.16.1"
+}
