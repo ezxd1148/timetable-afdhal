@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useState } from "react";
 
 import { cn } from "@timetable-afdhal/ui/lib/utils";
 
@@ -19,8 +19,7 @@ import { ClassEvent, SESSION_STYLES, SESSION_TYPES } from "./class-event";
 
 const START_HOUR = 8;
 const END_HOUR = 19;
-const HOUR_HEIGHT = 64; // px per hour
-const DAY_HEIGHT = (END_HOUR - START_HOUR) * HOUR_HEIGHT;
+const MIN_DAY_HEIGHT = (END_HOUR - START_HOUR) * 64; // Keep time slots readable on short screens.
 const START_MINUTES = START_HOUR * 60;
 const END_MINUTES = END_HOUR * 60;
 const MIN_EVENT_HEIGHT = 36;
@@ -35,12 +34,17 @@ function clampMinutes(minutes: number): number {
   return Math.min(Math.max(minutes, START_MINUTES), END_MINUTES);
 }
 
-function eventPosition(startTime: string, endTime: string): { top: number; height: number } {
+function minutePosition(minutes: number): number {
+  return ((minutes - START_MINUTES) / (END_MINUTES - START_MINUTES)) * 100;
+}
+
+function eventPosition(startTime: string, endTime: string): CSSProperties {
   const start = clampMinutes(timeToMinutes(startTime));
   const end = clampMinutes(timeToMinutes(endTime));
-  const top = ((start - START_MINUTES) / 60) * HOUR_HEIGHT;
-  const height = Math.max(((end - start) / 60) * HOUR_HEIGHT, MIN_EVENT_HEIGHT);
-  return { top: top + 2, height: height - 4 };
+  return {
+    top: `calc(${minutePosition(start)}% + 2px)`,
+    height: `max(${MIN_EVENT_HEIGHT - 4}px, calc(${minutePosition(end) - minutePosition(start)}% - 4px))`,
+  };
 }
 
 export function ClassCalendar() {
@@ -77,8 +81,8 @@ export function ClassCalendar() {
   if (!mounted) {
     return (
       <div
-        className="animate-pulse rounded-lg border bg-muted/40"
-        style={{ height: DAY_HEIGHT + 56 }}
+        className="flex-1 animate-pulse rounded-lg border bg-muted/40"
+        style={{ minHeight: MIN_DAY_HEIGHT + 56 }}
         aria-hidden="true"
       />
     );
@@ -87,7 +91,7 @@ export function ClassCalendar() {
   const isCurrentWeek = weekMondayISO === today?.currentMondayISO;
 
   return (
-    <div className="space-y-3">
+    <div className="flex min-w-0 flex-1 flex-col gap-3">
       <CalendarHeader
         weekMondayISO={weekMondayISO}
         isCurrentWeek={isCurrentWeek}
@@ -96,8 +100,11 @@ export function ClassCalendar() {
         onToday={goToToday}
       />
 
-      <div className="overflow-x-auto rounded-lg border">
-        <div className="grid min-w-[720px] grid-cols-[3.5rem_repeat(5,minmax(0,1fr))]">
+      <div className="flex flex-1 flex-col overflow-x-auto rounded-lg border">
+        <div
+          className="grid min-w-[720px] flex-1 grid-cols-[3.5rem_repeat(5,minmax(0,1fr))]"
+          style={{ gridTemplateRows: `auto minmax(${MIN_DAY_HEIGHT}px, 1fr)` }}
+        >
           {/* Corner spacer for the time gutter column. */}
           <div className="sticky left-0 z-20 border-b bg-background" />
 
@@ -125,16 +132,12 @@ export function ClassCalendar() {
           ))}
 
           {/* Time gutter. */}
-          <div
-            className="sticky left-0 z-10 bg-background"
-            style={{ height: DAY_HEIGHT }}
-            aria-hidden="true"
-          >
+          <div className="sticky left-0 z-10 bg-background" aria-hidden="true">
             {LABEL_HOURS.map((hour) => (
               <div
                 key={hour}
                 className="absolute right-2 -translate-y-1/2 text-[11px] tabular-nums text-muted-foreground"
-                style={{ top: (hour - START_HOUR) * HOUR_HEIGHT }}
+                style={{ top: `${minutePosition(hour * 60)}%` }}
               >
                 {formatHourLabel(hour)}
               </div>
@@ -143,16 +146,12 @@ export function ClassCalendar() {
 
           {/* Day columns. */}
           {days.map(({ dateISO, occurrences: dayOccurrences, isToday }) => (
-            <div
-              key={dateISO}
-              className={cn("relative border-l", isToday && "bg-primary/[0.03]")}
-              style={{ height: DAY_HEIGHT }}
-            >
+            <div key={dateISO} className={cn("relative border-l", isToday && "bg-primary/[0.03]")}>
               {GRID_HOURS.map((hour) => (
                 <div
                   key={hour}
                   className="absolute inset-x-0 border-t border-border/60"
-                  style={{ top: (hour - START_HOUR) * HOUR_HEIGHT }}
+                  style={{ top: `${minutePosition(hour * 60)}%` }}
                 />
               ))}
               {dayOccurrences.map((occurrence) => (
