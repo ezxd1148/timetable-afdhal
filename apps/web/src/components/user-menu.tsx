@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@timetable-afdhal/ui/components/dropdown-menu";
 import { Skeleton } from "@timetable-afdhal/ui/components/skeleton";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -16,6 +17,7 @@ import { authClient } from "@/lib/auth-client";
 
 export default function UserMenu() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: session, isPending } = authClient.useSession();
 
   if (isPending) {
@@ -46,6 +48,7 @@ export default function UserMenu() {
               authClient.signOut({
                 fetchOptions: {
                   onSuccess: () => {
+                    queryClient.clear();
                     router.push("/");
                   },
                 },
