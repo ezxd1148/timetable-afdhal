@@ -3,13 +3,16 @@
 import { type CSSProperties, useEffect, useMemo, useState } from "react";
 
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "@timetable-afdhal/ui/components/button";
 import { cn } from "@timetable-afdhal/ui/lib/utils";
 
 import { generateOccurrencesForWeek } from "@/lib/schedule/generate-occurrences";
+import { getFreeSlots } from "@/lib/schedule/free-time";
 import {
   addDays,
   formatHourLabel,
   getDatePartsInZone,
+  getWeekdayFromISO,
   getWeekMondayISO,
   parseISODate,
   timeToMinutes,
@@ -18,6 +21,7 @@ import { useTRPC } from "@/utils/trpc";
 
 import { CalendarHeader } from "./calendar-header";
 import { ClassEvent, SESSION_STYLES, SESSION_TYPES } from "./class-event";
+import { FreeTimePanel } from "./free-time-panel";
 import { PERSONAL_EVENT_DOT, PersonalEvent, type PublicPersonalEvent } from "./personal-event";
 
 const START_HOUR = 8;
@@ -54,10 +58,18 @@ function overlapsGrid({ startTime, endTime }: PublicPersonalEvent): boolean {
   return timeToMinutes(startTime) < END_MINUTES && timeToMinutes(endTime) > START_MINUTES;
 }
 
+/** Monday (ISO date) of the week that contains the ISO calendar date `iso`. */
+function getWeekMondayFromISO(iso: string): string {
+  return addDays(iso, 1 - getWeekdayFromISO(iso));
+}
+
 export function ClassCalendar() {
   const trpc = useTRPC();
   const [mounted, setMounted] = useState(false);
   const [weekMondayISO, setWeekMondayISO] = useState<string>(() => getWeekMondayISO(new Date()));
+  // null means "today", resolved once mounted so SSR and the client agree.
+  const [selectedDateISO, setSelectedDateISO] = useState<string | null>(null);
+  const [showFreeTime, setShowFreeTime] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
@@ -70,6 +82,8 @@ export function ClassCalendar() {
     };
   }, [mounted]);
 
+  const focusedDateISO = selectedDateISO ?? today?.todayISO ?? null;
+
   const occurrences = useMemo(() => generateOccurrencesForWeek(weekMondayISO), [weekMondayISO]);
 
   const personalEventsQuery = useQuery(
@@ -80,12 +94,38 @@ export function ClassCalendar() {
   );
   const personalEvents = personalEventsQuery.data ?? [];
 
+  // Free time is computed for the single focused day, independent of the visible week.
+  const focusedDayOccurrences = useMemo(
+    () =>
+      focusedDateISO === null
+        ? []
+        : generateOccurrencesForWeek(getWeekMondayFromISO(focusedDateISO)).filter(
+            (occurrence) => occurrence.dateISO === focusedDateISO,
+          ),
+    [focusedDateISO],
+  );
+
+  const focusedDayEventsQuery = useQuery({
+    ...trpc.personalEvents.listPublic.queryOptions({
+      startISO: focusedDateISO ?? "",
+      endISO: focusedDateISO ?? "",
+    }),
+    enabled: showFreeTime && focusedDateISO !== null,
+  });
+  const focusedDayEventsData = focusedDayEventsQuery.data;
+
+  const freeSlots = useMemo(
+    () => getFreeSlots(focusedDateISO ?? "", focusedDayOccurrences, focusedDayEventsData ?? []),
+    [focusedDateISO, focusedDayOccurrences, focusedDayEventsData],
+  );
+
   const days = WEEKDAYS.map((weekday) => {
     const dateISO = addDays(weekMondayISO, weekday - 1);
     return {
       weekday,
       dateISO,
       isToday: dateISO === today?.todayISO,
+      isSelected: dateISO === focusedDateISO,
       occurrences: occurrences.filter((occurrence) => occurrence.weekday === weekday),
       personalEvents: personalEvents.filter(
         (event) => event.dateISO === dateISO && overlapsGrid(event),
@@ -95,7 +135,11 @@ export function ClassCalendar() {
 
   const goToPreviousWeek = () => setWeekMondayISO((iso) => addDays(iso, -7));
   const goToNextWeek = () => setWeekMondayISO((iso) => addDays(iso, 7));
-  const goToToday = () => setWeekMondayISO(getWeekMondayISO(new Date()));
+  const jumpToDate = (dateISO: string) => {
+    setSelectedDateISO(dateISO);
+    setWeekMondayISO(getWeekMondayFromISO(dateISO));
+  };
+  const goToToday = () => jumpToDate(getDatePartsInZone(new Date()).iso);
 
   if (!mounted) {
     return (
@@ -107,16 +151,19 @@ export function ClassCalendar() {
     );
   }
 
-  const isCurrentWeek = weekMondayISO === today?.currentMondayISO;
+  const isTodayShown =
+    weekMondayISO === today?.currentMondayISO && focusedDateISO === today?.todayISO;
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-3">
       <CalendarHeader
         weekMondayISO={weekMondayISO}
-        isCurrentWeek={isCurrentWeek}
+        isTodayShown={isTodayShown}
         onPreviousWeek={goToPreviousWeek}
         onNextWeek={goToNextWeek}
         onToday={goToToday}
+        selectedDateISO={focusedDateISO ?? undefined}
+        onJumpToDate={jumpToDate}
       />
 
       <div className="flex flex-1 flex-col overflow-x-auto rounded-lg border">
@@ -127,12 +174,15 @@ export function ClassCalendar() {
           {/* Corner spacer for the time gutter column. */}
           <div className="sticky left-0 z-20 border-b bg-background" />
 
-          {/* Day headers. */}
-          {days.map(({ weekday, dateISO, isToday }) => (
-            <div
+          {/* Day headers. Clicking one selects that day for the free-time panel. */}
+          {days.map(({ weekday, dateISO, isToday, isSelected }) => (
+            <button
               key={dateISO}
+              type="button"
+              aria-pressed={isSelected}
+              onClick={() => setSelectedDateISO(dateISO)}
               className={cn(
-                "flex flex-col items-center gap-0.5 border-b border-l py-2",
+                "flex w-full cursor-pointer flex-col items-center gap-0.5 border-b border-l py-2 transition-colors hover:bg-muted/50",
                 isToday && "bg-primary/5",
               )}
             >
@@ -143,11 +193,12 @@ export function ClassCalendar() {
                 className={cn(
                   "flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold tabular-nums",
                   isToday && "bg-primary text-primary-foreground",
+                  isSelected && !isToday && "ring-1 ring-primary",
                 )}
               >
                 {parseISODate(dateISO).day}
               </span>
-            </div>
+            </button>
           ))}
 
           {/* Time gutter. */}
@@ -228,7 +279,24 @@ export function ClassCalendar() {
             personalEvents.length === 0 &&
             "No personal events this week"}
         </div>
+
+        <Button
+          variant={showFreeTime ? "secondary" : "outline"}
+          size="sm"
+          aria-pressed={showFreeTime}
+          onClick={() => setShowFreeTime((on) => !on)}
+        >
+          Show free time
+        </Button>
       </div>
+
+      {showFreeTime && focusedDateISO !== null && (
+        <FreeTimePanel
+          dateISO={focusedDateISO}
+          slots={freeSlots}
+          isLoading={focusedDayEventsQuery.isPending}
+        />
+      )}
     </div>
   );
 }
