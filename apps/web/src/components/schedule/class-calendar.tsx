@@ -2,6 +2,7 @@
 
 import { type CSSProperties, useEffect, useMemo, useState } from "react";
 
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@timetable-afdhal/ui/lib/utils";
 
 import { generateOccurrencesForWeek } from "@/lib/schedule/generate-occurrences";
@@ -13,9 +14,11 @@ import {
   parseISODate,
   timeToMinutes,
 } from "@/lib/schedule/schedule-utils";
+import { useTRPC } from "@/utils/trpc";
 
 import { CalendarHeader } from "./calendar-header";
 import { ClassEvent, SESSION_STYLES, SESSION_TYPES } from "./class-event";
+import { PERSONAL_EVENT_DOT, PersonalEvent, type PublicPersonalEvent } from "./personal-event";
 
 const START_HOUR = 8;
 const END_HOUR = 19;
@@ -47,7 +50,12 @@ function eventPosition(startTime: string, endTime: string): CSSProperties {
   };
 }
 
+function overlapsGrid({ startTime, endTime }: PublicPersonalEvent): boolean {
+  return timeToMinutes(startTime) < END_MINUTES && timeToMinutes(endTime) > START_MINUTES;
+}
+
 export function ClassCalendar() {
+  const trpc = useTRPC();
   const [mounted, setMounted] = useState(false);
   const [weekMondayISO, setWeekMondayISO] = useState<string>(() => getWeekMondayISO(new Date()));
 
@@ -64,6 +72,14 @@ export function ClassCalendar() {
 
   const occurrences = useMemo(() => generateOccurrencesForWeek(weekMondayISO), [weekMondayISO]);
 
+  const personalEventsQuery = useQuery(
+    trpc.personalEvents.listPublic.queryOptions({
+      startISO: weekMondayISO,
+      endISO: addDays(weekMondayISO, 6),
+    }),
+  );
+  const personalEvents = personalEventsQuery.data ?? [];
+
   const days = WEEKDAYS.map((weekday) => {
     const dateISO = addDays(weekMondayISO, weekday - 1);
     return {
@@ -71,6 +87,9 @@ export function ClassCalendar() {
       dateISO,
       isToday: dateISO === today?.todayISO,
       occurrences: occurrences.filter((occurrence) => occurrence.weekday === weekday),
+      personalEvents: personalEvents.filter(
+        (event) => event.dateISO === dateISO && overlapsGrid(event),
+      ),
     };
   });
 
@@ -145,24 +164,37 @@ export function ClassCalendar() {
           </div>
 
           {/* Day columns. */}
-          {days.map(({ dateISO, occurrences: dayOccurrences, isToday }) => (
-            <div key={dateISO} className={cn("relative border-l", isToday && "bg-primary/[0.03]")}>
-              {GRID_HOURS.map((hour) => (
-                <div
-                  key={hour}
-                  className="absolute inset-x-0 border-t border-border/60"
-                  style={{ top: `${minutePosition(hour * 60)}%` }}
-                />
-              ))}
-              {dayOccurrences.map((occurrence) => (
-                <ClassEvent
-                  key={occurrence.id}
-                  occurrence={occurrence}
-                  style={eventPosition(occurrence.startTime, occurrence.endTime)}
-                />
-              ))}
-            </div>
-          ))}
+          {days.map(
+            ({ dateISO, occurrences: dayOccurrences, personalEvents: dayEvents, isToday }) => (
+              <div
+                key={dateISO}
+                className={cn("relative overflow-hidden border-l", isToday && "bg-primary/[0.03]")}
+              >
+                {GRID_HOURS.map((hour) => (
+                  <div
+                    key={hour}
+                    className="absolute inset-x-0 border-t border-border/60"
+                    style={{ top: `${minutePosition(hour * 60)}%` }}
+                  />
+                ))}
+                {dayOccurrences.map((occurrence) => (
+                  <ClassEvent
+                    key={occurrence.id}
+                    occurrence={occurrence}
+                    style={eventPosition(occurrence.startTime, occurrence.endTime)}
+                  />
+                ))}
+                {/* After classes so DOM order stacks these on top; a z-index would cover the sticky gutter. */}
+                {dayEvents.map((event) => (
+                  <PersonalEvent
+                    key={event.id}
+                    event={event}
+                    style={eventPosition(event.startTime, event.endTime)}
+                  />
+                ))}
+              </div>
+            ),
+          )}
         </div>
       </div>
 
@@ -173,6 +205,29 @@ export function ClassCalendar() {
             {session}
           </div>
         ))}
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span className={cn("h-2 w-2 rounded-full", PERSONAL_EVENT_DOT)} />
+          Personal
+        </div>
+
+        <div className="ml-auto text-xs text-muted-foreground" aria-live="polite">
+          {personalEventsQuery.isPending && "Loading personal events…"}
+          {personalEventsQuery.isError && (
+            <>
+              <span className="text-destructive">Couldn&apos;t load personal events.</span>{" "}
+              <button
+                type="button"
+                className="underline underline-offset-2 hover:text-foreground"
+                onClick={() => personalEventsQuery.refetch()}
+              >
+                Retry
+              </button>
+            </>
+          )}
+          {personalEventsQuery.isSuccess &&
+            personalEvents.length === 0 &&
+            "No personal events this week"}
+        </div>
       </div>
     </div>
   );

@@ -9,7 +9,8 @@
     "check-types": "tsc --noEmit",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:migrate:deploy": "prisma migrate deploy"
+    "db:migrate:deploy": "prisma migrate deploy",
+    "seed:personal-events": "tsx prisma/seed-personal-events.ts"
   },
   "dependencies": {
     "@prisma/adapter-d1": "^7.10.0",
@@ -17,8 +18,10 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@libsql/client": "^0.18.0",
     "@timetable-afdhal/config": "workspace:*",
     "prisma": "^7.10.0",
+    "tsx": "^4.23.15",
     "typescript": "catalog:",
     "varlock": "catalog:"
   }
