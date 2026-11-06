@@ -6,6 +6,8 @@ type FreeTimePanelProps = {
   dateISO: string;
   slots: FreeSlot[];
   isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
 };
 
 /** Long-form weekday/date label, computed in UTC so the ISO date never shifts. */
@@ -19,7 +21,13 @@ function formatDayLabel(dateISO: string): string {
   });
 }
 
-export function FreeTimePanel({ dateISO, slots, isLoading = false }: FreeTimePanelProps) {
+export function FreeTimePanel({
+  dateISO,
+  slots,
+  isLoading = false,
+  isError = false,
+  onRetry,
+}: FreeTimePanelProps) {
   return (
     <section aria-labelledby="free-time-heading" className="rounded-lg border p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -33,6 +41,17 @@ export function FreeTimePanel({ dateISO, slots, isLoading = false }: FreeTimePan
         <p className="py-6 text-center text-sm text-muted-foreground" aria-live="polite">
           Loading…
         </p>
+      ) : isError ? (
+        <div className="flex flex-col items-center gap-1 py-6 text-center text-sm">
+          <p className="text-destructive">Couldn&apos;t load personal events for this day.</p>
+          <button
+            type="button"
+            className="text-xs underline underline-offset-2 hover:text-foreground"
+            onClick={onRetry}
+          >
+            Retry
+          </button>
+        </div>
       ) : slots.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">Fully booked</p>
       ) : (

@@ -6,7 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@timetable-afdhal/ui/components/button";
 import { cn } from "@timetable-afdhal/ui/lib/utils";
 
-import { generateOccurrencesForWeek } from "@/lib/schedule/generate-occurrences";
+import {
+  type ClassOccurrence,
+  generateOccurrencesForWeek,
+} from "@/lib/schedule/generate-occurrences";
 import { getFreeSlots } from "@/lib/schedule/free-time";
 import {
   addDays,
@@ -15,6 +18,7 @@ import {
   getWeekdayFromISO,
   getWeekMondayISO,
   parseISODate,
+  TIME_ZONE,
   timeToMinutes,
 } from "@/lib/schedule/schedule-utils";
 import { useTRPC } from "@/utils/trpc";
@@ -22,7 +26,7 @@ import { useTRPC } from "@/utils/trpc";
 import { CalendarHeader } from "./calendar-header";
 import { ClassEvent, SESSION_STYLES, SESSION_TYPES } from "./class-event";
 import { FreeTimePanel } from "./free-time-panel";
-import { PERSONAL_EVENT_DOT, PersonalEvent, type PublicPersonalEvent } from "./personal-event";
+import { PERSONAL_EVENT_PATTERN, PersonalEvent, type PublicPersonalEvent } from "./personal-event";
 
 const START_HOUR = 8;
 const END_HOUR = 19;
@@ -61,6 +65,56 @@ function overlapsGrid({ startTime, endTime }: PublicPersonalEvent): boolean {
 /** Monday (ISO date) of the week that contains the ISO calendar date `iso`. */
 function getWeekMondayFromISO(iso: string): string {
   return addDays(iso, 1 - getWeekdayFromISO(iso));
+}
+
+/** Saturday and Sunday have no classes; only Monday–Friday are drawn. */
+function isWeekendISO(iso: string): boolean {
+  return getWeekdayFromISO(iso) > 5;
+}
+
+/** Clock time in Malaysia Time, e.g. "14:05". */
+function formatClockInZone(timestamp: number): string {
+  return new Date(timestamp).toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: TIME_ZONE,
+  });
+}
+
+/** Grid lines, classes and personal events for one day; positioned against the nearest sized parent. */
+function DayTimeline({
+  occurrences,
+  personalEvents,
+}: {
+  occurrences: ClassOccurrence[];
+  personalEvents: PublicPersonalEvent[];
+}) {
+  return (
+    <>
+      {GRID_HOURS.map((hour) => (
+        <div
+          key={hour}
+          className="absolute inset-x-0 border-t border-border/60"
+          style={{ top: `${minutePosition(hour * 60)}%` }}
+        />
+      ))}
+      {occurrences.map((occurrence) => (
+        <ClassEvent
+          key={occurrence.id}
+          occurrence={occurrence}
+          style={eventPosition(occurrence.startTime, occurrence.endTime)}
+        />
+      ))}
+      {/* After classes so DOM order stacks these on top; a z-index would cover the sticky gutter. */}
+      {personalEvents.map((event) => (
+        <PersonalEvent
+          key={event.id}
+          event={event}
+          style={eventPosition(event.startTime, event.endTime)}
+        />
+      ))}
+    </>
+  );
 }
 
 export function ClassCalendar() {
@@ -153,6 +207,9 @@ export function ClassCalendar() {
 
   const isTodayShown =
     weekMondayISO === today?.currentMondayISO && focusedDateISO === today?.todayISO;
+  const isWeekendFocused = focusedDateISO !== null && isWeekendISO(focusedDateISO);
+  // Mobile shows one day at a time: the selected weekday if it is in the visible week.
+  const mobileDay = days.find((day) => day.isSelected);
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-3">
@@ -166,7 +223,79 @@ export function ClassCalendar() {
         onJumpToDate={jumpToDate}
       />
 
-      <div className="flex flex-1 flex-col overflow-x-auto rounded-lg border">
+      {isWeekendFocused && (
+        <p className="rounded-lg border border-dashed px-4 py-3 text-center text-sm text-muted-foreground">
+          No classes on weekends — pick a weekday to see its schedule.
+        </p>
+      )}
+
+      {/* Mobile: stacked day tabs and a single-day timeline. */}
+      <div role="group" aria-label="Choose a day" className="grid grid-cols-5 gap-1 sm:hidden">
+        {days.map(({ weekday, dateISO, isToday, isSelected }) => (
+          <button
+            key={dateISO}
+            type="button"
+            aria-pressed={isSelected}
+            onClick={() => setSelectedDateISO(dateISO)}
+            className={cn(
+              "flex flex-col items-center gap-0.5 rounded-lg border py-1.5 transition-colors",
+              isSelected ? "border-primary bg-primary/10" : "hover:bg-muted/50",
+            )}
+          >
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              {DAY_NAMES[weekday - 1]}
+            </span>
+            <span
+              className={cn(
+                "flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold tabular-nums",
+                isToday && "bg-primary text-primary-foreground",
+              )}
+            >
+              {parseISODate(dateISO).day}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-1 flex-col sm:hidden">
+        {mobileDay ? (
+          <div className="flex overflow-hidden rounded-lg border">
+            <div
+              className="relative w-14 shrink-0"
+              style={{ height: MIN_DAY_HEIGHT }}
+              aria-hidden="true"
+            >
+              {LABEL_HOURS.map((hour) => (
+                <div
+                  key={hour}
+                  className="absolute right-2 -translate-y-1/2 text-[11px] tabular-nums text-muted-foreground"
+                  style={{ top: `${minutePosition(hour * 60)}%` }}
+                >
+                  {formatHourLabel(hour)}
+                </div>
+              ))}
+            </div>
+            <div
+              className="relative flex-1 overflow-hidden border-l"
+              style={{ height: MIN_DAY_HEIGHT }}
+            >
+              <DayTimeline
+                occurrences={mobileDay.occurrences}
+                personalEvents={mobileDay.personalEvents}
+              />
+            </div>
+          </div>
+        ) : (
+          !isWeekendFocused && (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Pick a day above to see its classes.
+            </p>
+          )
+        )}
+      </div>
+
+      {/* Desktop: full Monday–Friday week grid. */}
+      <div className="hidden flex-1 flex-col overflow-x-auto rounded-lg border sm:flex">
         <div
           className="grid min-w-[720px] flex-1 grid-cols-[3.5rem_repeat(5,minmax(0,1fr))]"
           style={{ gridTemplateRows: `auto minmax(${MIN_DAY_HEIGHT}px, 1fr)` }}
@@ -221,28 +350,7 @@ export function ClassCalendar() {
                 key={dateISO}
                 className={cn("relative overflow-hidden border-l", isToday && "bg-primary/[0.03]")}
               >
-                {GRID_HOURS.map((hour) => (
-                  <div
-                    key={hour}
-                    className="absolute inset-x-0 border-t border-border/60"
-                    style={{ top: `${minutePosition(hour * 60)}%` }}
-                  />
-                ))}
-                {dayOccurrences.map((occurrence) => (
-                  <ClassEvent
-                    key={occurrence.id}
-                    occurrence={occurrence}
-                    style={eventPosition(occurrence.startTime, occurrence.endTime)}
-                  />
-                ))}
-                {/* After classes so DOM order stacks these on top; a z-index would cover the sticky gutter. */}
-                {dayEvents.map((event) => (
-                  <PersonalEvent
-                    key={event.id}
-                    event={event}
-                    style={eventPosition(event.startTime, event.endTime)}
-                  />
-                ))}
+                <DayTimeline occurrences={dayOccurrences} personalEvents={dayEvents} />
               </div>
             ),
           )}
@@ -257,14 +365,20 @@ export function ClassCalendar() {
           </div>
         ))}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <span className={cn("h-2 w-2 rounded-full", PERSONAL_EVENT_DOT)} />
-          Personal
+          <span
+            className="h-3 w-4 rounded-sm border border-dashed border-muted-foreground/50"
+            style={{ backgroundImage: PERSONAL_EVENT_PATTERN }}
+          />
+          Personal / Busy
         </div>
 
-        <div className="ml-auto text-xs text-muted-foreground" aria-live="polite">
-          {personalEventsQuery.isPending && "Loading personal events…"}
+        <div
+          className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
+          aria-live="polite"
+        >
+          {personalEventsQuery.isPending && <span>Loading personal events…</span>}
           {personalEventsQuery.isError && (
-            <>
+            <span>
               <span className="text-destructive">Couldn&apos;t load personal events.</span>{" "}
               <button
                 type="button"
@@ -273,11 +387,20 @@ export function ClassCalendar() {
               >
                 Retry
               </button>
+            </span>
+          )}
+          {personalEventsQuery.isSuccess && (
+            <>
+              <span>
+                {personalEvents.length === 0
+                  ? "No personal events this week"
+                  : `${personalEvents.length} personal ${personalEvents.length === 1 ? "event" : "events"} this week`}
+              </span>
+              <span className="tabular-nums">
+                Updated {formatClockInZone(personalEventsQuery.dataUpdatedAt)}
+              </span>
             </>
           )}
-          {personalEventsQuery.isSuccess &&
-            personalEvents.length === 0 &&
-            "No personal events this week"}
         </div>
 
         <Button
@@ -295,6 +418,8 @@ export function ClassCalendar() {
           dateISO={focusedDateISO}
           slots={freeSlots}
           isLoading={focusedDayEventsQuery.isPending}
+          isError={focusedDayEventsQuery.isError}
+          onRetry={() => focusedDayEventsQuery.refetch()}
         />
       )}
     </div>
