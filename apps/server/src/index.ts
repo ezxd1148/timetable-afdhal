@@ -11,10 +11,16 @@ import { createAuth } from "./services";
 const app = new Hono();
 
 app.use(logger());
+function allowedOrigins(): string[] {
+  return ENV.CORS_ORIGIN.split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
+}
+
 app.use(
   "/*",
   cors({
-    origin: ENV.CORS_ORIGIN,
+    origin: allowedOrigins(),
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     credentials: true,

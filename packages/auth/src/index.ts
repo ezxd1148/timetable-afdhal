@@ -17,7 +17,10 @@ export function createAuth(
     database: prismaAdapter(database, {
       provider: "sqlite",
     }),
-    trustedOrigins: [env.CORS_ORIGIN, ...desktopOrigins],
+    trustedOrigins: env.CORS_ORIGIN.split(",")
+      .map((o) => o.trim())
+      .filter(Boolean)
+      .concat(desktopOrigins),
     emailAndPassword: { enabled: true }, // { disableSignUp: true}
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
