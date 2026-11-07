@@ -38,8 +38,8 @@
   },
   "lint-staged": {
     "*": [
-      "oxlint",
-      "oxfmt --write"
+      "oxlint --no-error-on-unmatched-pattern",
+      "oxfmt --write --no-error-on-unmatched-pattern"
     ]
   },
   "packageManager": "pnpm@12.16.1"
