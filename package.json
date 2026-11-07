@@ -14,7 +14,7 @@
     "dev:server": "nx run-many -t dev:bare --projects=hono",
     "db:generate": "nx run-many -t db:generate --projects=@timetable-afdhal/db",
     "db:migrate": "nx run-many -t db:migrate --projects=@timetable-afdhal/db",
-    "deploy": "nx run-many -t deploy --projects=@timetable-afdhal/infra",
+    "deploy": "nx run-many -t deploy --projects=@timetable-afdhal/infra --yes",
     "destroy": "nx run-many -t destroy --projects=@timetable-afdhal/infra",
     "env:generate": "varlock codegen --path ./apps/web/ && varlock codegen --path ./apps/server/ && varlock codegen --path ./packages/db/",
     "postinstall": "varlock codegen --path ./apps/web/ && varlock codegen --path ./apps/server/ && varlock codegen --path ./packages/db/",

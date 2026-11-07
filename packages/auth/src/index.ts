@@ -18,7 +18,7 @@ export function createAuth(
       provider: "sqlite",
     }),
     trustedOrigins: [env.CORS_ORIGIN, ...desktopOrigins],
-    emailAndPassword: { enabled: true, disableSignUp: true },
+    emailAndPassword: { enabled: true }, // { disableSignUp: true}
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     advanced: {
