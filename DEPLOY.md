@@ -28,7 +28,8 @@ initial migration: it applies cleanly to an empty D1/SQLite database.
 | `nodejs_compat`       | Set on both workers (`server` in `alchemy.run.ts`; `compatibility_flags` in `wrangler.jsonc`) plus `global_fetch_strictly_public` on web.                                                    |
 | `build:cloudflare`    | `apps/web/package.json` has `"build:cloudflare": "opennextjs-cloudflare build"`, and `alchemy.run.ts` invokes it with `NEXT_PUBLIC_SERVER_URL` injected from the deployed server worker URL. |
 | `open-next.config.ts` | Default `defineCloudflareConfig({})` — correct for this app.                                                                                                                                 |
-| `BETTER_AUTH_URL`     | Auto-resolved to the server worker's own URL (`Cloudflare.Worker.URL`) in `alchemy.run.ts` — do not set manually.                                                                            |
+| `BETTER_AUTH_URL`     | Auto-resolved to the server worker's primary URL (`Cloudflare.Worker.URL`, the `domain` set in `alchemy.run.ts`) — do not set manually.                                                      |
+| API custom domain     | `time-api.fdhlsfi.site` must stay same-site with the web origin, or the session cookie becomes third-party and browsers can drop it.                                                         |
 
 ### Env vars (exact)
 

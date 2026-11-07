@@ -10,6 +10,10 @@ export const db = Cloudflare.D1.Database("database", {
 
 export const server = Cloudflare.Worker("server", {
   main: "../../apps/server/src/index.ts",
+  // Keeps the API same-site with time.fdhlsfi.site. On workers.dev the session cookie is
+  // third-party, so browsers that block those drop it and sign-in never sticks.
+  // Setting `domain` detaches undeclared hostnames, so existing ones must stay listed.
+  domain: { name: "time-api.fdhlsfi.site", aliases: ["server.aspi.world"] },
   compatibility: {
     flags: ["nodejs_compat"],
   },
