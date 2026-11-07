@@ -1,1 +1,58 @@
 @import "@timetable-afdhal/ui/globals.css";
+
+:root {
+  --background: #f3f5fc;
+  --foreground: #141b3c;
+  --card: #ffffff;
+  --card-foreground: #141b3c;
+  --popover: #ffffff;
+  --popover-foreground: #141b3c;
+  --primary: #c2134f;
+  --primary-foreground: #ffffff;
+  --secondary: #e4e8f6;
+  --secondary-foreground: #141b3c;
+  --muted: #e4e8f6;
+  --muted-foreground: #4f587b;
+  --accent: #e4e8f6;
+  --accent-foreground: #141b3c;
+  --border: #d3d9ec;
+  --input: #c3cbe3;
+  --ring: #c2134f;
+  --radius: 0.5rem;
+
+  --lecture: #2a3fcb;
+  --tutorial: #6d2fa8;
+  --lab: #0a6f6b;
+}
+
+.dark {
+  --background: #0e1330;
+  --foreground: #eef0fb;
+  --card: #171d42;
+  --card-foreground: #eef0fb;
+  --popover: #171d42;
+  --popover-foreground: #eef0fb;
+  --primary: #ff6f9c;
+  --primary-foreground: #2a0614;
+  --secondary: #252c5a;
+  --secondary-foreground: #eef0fb;
+  --muted: #252c5a;
+  --muted-foreground: #b1b8d9;
+  --accent: #252c5a;
+  --accent-foreground: #eef0fb;
+  --border: #2d3567;
+  --input: #3a4379;
+  --ring: #ff6f9c;
+
+  --lecture: #3650e0;
+  --tutorial: #7f45c4;
+  --lab: #0c7f7a;
+}
+
+@theme inline {
+  --font-sans: var(--font-body), sans-serif;
+  --font-display: var(--font-heading), sans-serif;
+  --color-lecture: var(--lecture);
+  --color-tutorial: var(--tutorial);
+  --color-lab: var(--lab);
+}

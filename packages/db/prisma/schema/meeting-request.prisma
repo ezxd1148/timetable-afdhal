@@ -1,0 +1,20 @@
+model MeetingRequest {
+  id              String         @id @default(cuid())
+  name            String
+  contactType     String
+  contactValue    String
+  message         String
+  dateISO         String
+  startTime       String
+  endTime         String
+  status          String         @default("pending")
+  ipHash          String?
+  personalEventId String?        @unique
+  personalEvent   PersonalEvent? @relation(fields: [personalEventId], references: [id], onDelete: SetNull)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([status, dateISO])
+  @@index([ipHash, createdAt])
+  @@map("meeting_request")
+}

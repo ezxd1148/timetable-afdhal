@@ -1,0 +1,14 @@
+{
+  "name": "@timetable-afdhal/schedule",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@timetable-afdhal/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

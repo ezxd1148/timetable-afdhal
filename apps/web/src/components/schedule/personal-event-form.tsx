@@ -8,7 +8,7 @@ import { Label } from "@timetable-afdhal/ui/components/label";
 import { toast } from "sonner";
 import z from "zod";
 
-import { timeToMinutes } from "@/lib/schedule/schedule-utils";
+import { timeToMinutes } from "@timetable-afdhal/schedule/schedule-utils";
 import { useTRPC } from "@/utils/trpc";
 
 export type OwnerPersonalEvent = {

@@ -94,7 +94,13 @@ function makeDb(
 }
 
 function callerFor(session: Session | null, db: Database) {
-  return appRouter.createCaller({ session, db });
+  return appRouter.createCaller({
+    session,
+    db,
+    ownerEmail: `${OWNER}@example.com`,
+    clientIp: null,
+    ipHashSecret: "test-secret",
+  });
 }
 
 async function expectCode(promise: Promise<unknown>, code: string) {

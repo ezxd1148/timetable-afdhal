@@ -1,34 +1,30 @@
 "use client";
 import Link from "next/link";
 
+import { authClient } from "@/lib/auth-client";
+
 import { ModeToggle } from "./mode-toggle";
 import UserMenu from "./user-menu";
 
 export default function Header() {
-  const links = [
-    { to: "/", label: "Home" },
-    { to: "/schedule", label: "Schedule" },
-    { to: "/dashboard", label: "Dashboard" },
-  ] as const;
+  const { data: session } = authClient.useSession();
 
   return (
-    <div>
-      <div className="flex flex-row items-center justify-between px-2 py-1">
-        <nav className="flex gap-4 text-lg">
-          {links.map(({ to, label }) => {
-            return (
-              <Link key={to} href={to}>
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="flex items-center gap-2">
-          <ModeToggle />
-          <UserMenu />
-        </div>
+    <header className="flex flex-row items-center justify-between gap-4 px-4 py-3">
+      <nav className="flex items-baseline gap-5">
+        <Link href="/schedule" className="font-display text-lg font-bold tracking-tight">
+          Afdhal&apos;s timetable
+        </Link>
+        {session && (
+          <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+            Dashboard
+          </Link>
+        )}
+      </nav>
+      <div className="flex items-center gap-2">
+        <ModeToggle />
+        <UserMenu />
       </div>
-      <hr />
-    </div>
+    </header>
   );
 }

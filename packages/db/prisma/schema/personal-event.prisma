@@ -8,6 +8,7 @@ model PersonalEvent {
   endTime   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  meetingRequest MeetingRequest?
 
   @@index([userId, dateISO])
   @@map("personal_event")

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+import { MeetingRequestsInbox } from "@/components/schedule/meeting-requests-inbox";
 import { authClient } from "@/lib/auth-client";
 
 import Dashboard from "./dashboard";
@@ -26,10 +27,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div>
-      <h1>Dashboard</h1>
-      <p>Welcome {session.user.name}</p>
+    <main className="mx-auto w-full max-w-3xl space-y-8 px-4 pt-4 pb-10">
+      <h1 className="font-display text-4xl font-extrabold tracking-tight">Dashboard</h1>
+      <MeetingRequestsInbox />
       <Dashboard session={session} />
-    </div>
+    </main>
   );
 }

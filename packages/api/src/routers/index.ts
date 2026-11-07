@@ -1,7 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { protectedProcedure, publicProcedure, router } from "../index";
+import { ownerProcedure, protectedProcedure, publicProcedure, router } from "../index";
+import { meetingRequestsRouter } from "./meeting-requests";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD");
 const timeHHmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Expected HH:mm");
@@ -42,6 +43,7 @@ export const appRouter = router({
       user: ctx.session.user,
     };
   }),
+  meetingRequests: meetingRequestsRouter,
   personalEvents: router({
     listPublic: publicProcedure
       .input(
@@ -62,6 +64,7 @@ export const appRouter = router({
         const rows = await ctx.db.personalEvent.findMany({
           where: {
             dateISO: { gte: input.startISO, lte: input.endISO },
+            user: { email: ctx.ownerEmail },
           },
           orderBy: [{ dateISO: "asc" }, { startTime: "asc" }],
         });
@@ -74,7 +77,7 @@ export const appRouter = router({
           title: currentUserId && row.userId === currentUserId ? row.title : null,
         }));
       }),
-    listMine: protectedProcedure
+    listMine: ownerProcedure
       .input(
         z
           .object({
@@ -103,7 +106,7 @@ export const appRouter = router({
           orderBy: [{ dateISO: "asc" }, { startTime: "asc" }],
         });
       }),
-    create: protectedProcedure.input(eventFields).mutation(async ({ ctx, input }) => {
+    create: ownerProcedure.input(eventFields).mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
       return ctx.db.personalEvent.create({
         data: {
@@ -115,7 +118,7 @@ export const appRouter = router({
         },
       });
     }),
-    update: protectedProcedure
+    update: ownerProcedure
       .input(eventFields.extend({ id: z.string().min(1) }))
       .mutation(async ({ ctx, input }) => {
         const userId = ctx.session.user.id;
@@ -134,7 +137,7 @@ export const appRouter = router({
           },
         });
       }),
-    remove: protectedProcedure
+    remove: ownerProcedure
       .input(z.object({ id: z.string().min(1) }))
       .mutation(async ({ ctx, input }) => {
         const userId = ctx.session.user.id;
@@ -145,7 +148,7 @@ export const appRouter = router({
         await ctx.db.personalEvent.delete({ where: { id: input.id } });
         return { id: input.id };
       }),
-    delete: protectedProcedure
+    delete: ownerProcedure
       .input(z.object({ id: z.string().min(1) }))
       .mutation(async ({ ctx, input }) => {
         const userId = ctx.session.user.id;

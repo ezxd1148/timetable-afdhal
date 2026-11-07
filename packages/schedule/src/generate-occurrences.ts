@@ -1,4 +1,4 @@
-import { classSchedule, type Session, type Weekday } from "@/data/class-schedule";
+import { classSchedule, type Session, type Weekday } from "./class-schedule";
 
 import { addDays } from "./schedule-utils";
 

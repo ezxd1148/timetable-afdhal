@@ -21,7 +21,7 @@ import {
   usePersonalEventsApi,
 } from "@/components/schedule/personal-event-form";
 import { authClient } from "@/lib/auth-client";
-import { formatTimeRange } from "@/lib/schedule/schedule-utils";
+import { formatTimeRange } from "@timetable-afdhal/schedule/schedule-utils";
 
 export default function Dashboard(_props: { session: typeof authClient.$Infer.Session }) {
   const api = usePersonalEventsApi();

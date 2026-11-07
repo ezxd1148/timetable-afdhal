@@ -1,6 +1,7 @@
 import type { Context as ApiContext } from "@timetable-afdhal/api/context";
 import type { Context as HonoContext } from "hono";
 
+import { ENV } from "./env.server";
 import { getDb } from "./services";
 import { createAuth } from "./services";
 
@@ -18,6 +19,9 @@ export async function createContext({ context }: CreateContextOptions): Promise<
   return {
     db,
     session,
+    ownerEmail: ENV.OWNER_EMAIL.trim().toLowerCase(),
+    clientIp: context.req.header("CF-Connecting-IP") ?? null,
+    ipHashSecret: ENV.BETTER_AUTH_SECRET,
   };
 }
 

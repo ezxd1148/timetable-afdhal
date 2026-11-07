@@ -1,5 +1,3 @@
-import type { PublicPersonalEvent } from "@/components/schedule/personal-event";
-
 import type { ClassOccurrence } from "./generate-occurrences";
 import { formatTimeRange, timeToMinutes } from "./schedule-utils";
 
@@ -12,13 +10,20 @@ export type FreeSlot = {
   endTime: string; // "HH:mm"
 };
 
+/** Anything that occupies time on a date: a class occurrence or a personal event. */
+export type BusyBlock = {
+  dateISO: string;
+  startTime: string;
+  endTime: string;
+};
+
 type Interval = { start: number; end: number }; // Minutes since midnight.
 
 function pad(value: number): string {
   return String(value).padStart(2, "0");
 }
 
-function minutesToTime(minutes: number): string {
+export function minutesToTime(minutes: number): string {
   return `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
 }
 
@@ -33,7 +38,7 @@ function minutesToTime(minutes: number): string {
 export function getFreeSlots(
   dateISO: string,
   classOccurrences: readonly ClassOccurrence[],
-  personalEvents: readonly PublicPersonalEvent[],
+  personalEvents: readonly BusyBlock[],
 ): FreeSlot[] {
   const windowStart = timeToMinutes(FREE_TIME_START);
   const windowEnd = timeToMinutes(FREE_TIME_END);

@@ -21,7 +21,8 @@ export function createAuth(
       .map((o) => o.trim())
       .filter(Boolean)
       .concat(desktopOrigins),
-    emailAndPassword: { enabled: true }, // { disableSignUp: true}
+    // Visitors never need accounts, and ownership is pinned to OWNER_EMAIL: open sign-up could claim it.
+    emailAndPassword: { enabled: true, disableSignUp: true },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     advanced: {

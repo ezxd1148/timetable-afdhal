@@ -16,6 +16,7 @@
     "@tanstack/react-form": "^1.33.5",
     "@tanstack/react-query": "^5.104.2",
     "@timetable-afdhal/api": "workspace:*",
+    "@timetable-afdhal/schedule": "workspace:*",
     "@timetable-afdhal/ui": "workspace:*",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",

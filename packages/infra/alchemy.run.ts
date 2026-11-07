@@ -20,6 +20,7 @@ export const server = Cloudflare.Worker("server", {
   env: {
     DB: db,
     CORS_ORIGIN: Config.String("CORS_ORIGIN"),
+    OWNER_EMAIL: Config.String("OWNER_EMAIL"),
     BETTER_AUTH_SECRET: Config.Redacted("BETTER_AUTH_SECRET"),
     BETTER_AUTH_URL: Cloudflare.Worker.URL,
   },

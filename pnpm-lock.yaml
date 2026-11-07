@@ -327,6 +327,9 @@ importers:
       '@timetable-afdhal/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@timetable-afdhal/schedule':
+        specifier: workspace:*
+        version: link:../../packages/schedule
       '@timetable-afdhal/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -409,6 +412,9 @@ importers:
       '@timetable-afdhal/db':
         specifier: workspace:*
         version: link:../db
+      '@timetable-afdhal/schedule':
+        specifier: workspace:*
+        version: link:../schedule
       '@trpc/client':
         specifier: 'catalog:'
         version: 11.23.0(@trpc/server@11.23.0(@types/ws@8.18.2)(next@16.4.4(@babel/core@7.29.7(supports-color@10.2.2))(@types/node@26.6.6)(babel-plugin-react-compiler@1.0.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(typescript@6.0.3))(typescript@6.0.3)
@@ -508,6 +514,15 @@ importers:
       varlock:
         specifier: 'catalog:'
         version: 1.23.0
+
+  packages/schedule:
+    devDependencies:
+      '@timetable-afdhal/config':
+        specifier: workspace:*
+        version: link:../config
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
 
   packages/ui:
     dependencies:

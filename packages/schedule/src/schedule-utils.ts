@@ -11,6 +11,8 @@
 
 export const TIME_ZONE = "Asia/Kuala_Lumpur";
 
+export const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+
 const MONTH_LABELS = [
   "Jan",
   "Feb",
@@ -44,7 +46,7 @@ function pad(value: number): string {
 
 /** Parse a "YYYY-MM-DD" string into its numeric parts. */
 export function parseISODate(iso: string): DateParts {
-  const [year, month, day] = iso.split("-").map(Number);
+  const [year = NaN, month = NaN, day = NaN] = iso.split("-").map(Number);
   if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
     throw new Error(`Invalid ISO date: ${iso}`);
   }
@@ -84,6 +86,13 @@ export function getWeekdayFromISO(iso: string): number {
   return utcDay === 0 ? 7 : utcDay;
 }
 
+/** True for a "YYYY-MM-DD" string naming a date that exists, so not "2026-11-31". */
+export function isRealISODate(iso: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const date = new Date(`${iso}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === iso;
+}
+
 /** Add whole days to an ISO calendar date without any timezone surprises. */
 export function addDays(iso: string, days: number): string {
   const date = new Date(`${iso}T00:00:00Z`);
@@ -97,9 +106,23 @@ export function getWeekMondayISO(anchor: Date, timeZone: string = TIME_ZONE): st
   return addDays(iso, 1 - getWeekdayFromISO(iso));
 }
 
+/** Minutes since midnight of `date` on the wall clock of the given zone. */
+export function getMinutesInZone(date: Date, timeZone: string = TIME_ZONE): number {
+  const [hours = 0, minutes = 0] = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  })
+    .format(date)
+    .split(":")
+    .map(Number);
+  return hours * 60 + minutes;
+}
+
 /** Parse a "HH:mm" string into numeric parts. */
 export function parseTime(time: string): TimeParts {
-  const [hours, minutes] = time.split(":").map(Number);
+  const [hours = NaN, minutes = NaN] = time.split(":").map(Number);
   if (!Number.isInteger(hours) || !Number.isInteger(minutes)) {
     throw new Error(`Invalid time value: ${time}`);
   }
@@ -130,17 +153,23 @@ export function formatHourLabel(hour: number): string {
   return `${pad(hour)}:00`;
 }
 
-/** Human-readable Monday–Friday range, e.g. "3 – 7 Nov 2026". */
+/** Short weekday and date, e.g. "Sat, 8 Nov". */
+export function formatDayLabel(iso: string): string {
+  const { month, day } = parseISODate(iso);
+  return `${DAY_LABELS[getWeekdayFromISO(iso) - 1]}, ${day} ${MONTH_LABELS[month - 1]}`;
+}
+
+/** Human-readable Monday–Sunday range, e.g. "2 – 8 Nov 2026". */
 export function formatWeekRange(mondayISO: string): string {
   const monday = parseISODate(mondayISO);
-  const friday = parseISODate(addDays(mondayISO, 4));
+  const sunday = parseISODate(addDays(mondayISO, 6));
 
-  if (monday.month === friday.month) {
-    return `${monday.day} – ${friday.day} ${MONTH_LABELS[friday.month - 1]} ${friday.year}`;
+  if (monday.month === sunday.month) {
+    return `${monday.day} – ${sunday.day} ${MONTH_LABELS[sunday.month - 1]} ${sunday.year}`;
   }
 
   return (
     `${monday.day} ${MONTH_LABELS[monday.month - 1]}` +
-    ` – ${friday.day} ${MONTH_LABELS[friday.month - 1]} ${friday.year}`
+    ` – ${sunday.day} ${MONTH_LABELS[sunday.month - 1]} ${sunday.year}`
   );
 }

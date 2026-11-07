@@ -36,10 +36,11 @@ initial migration: it applies cleanly to an empty D1/SQLite database.
 Server worker (deployment process, e.g. `apps/server/.env` — loaded by Alchemy via
 `varlock/auto-load`):
 
-| Var                  | Required | Notes                                                                                                                     |
-| -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `BETTER_AUTH_SECRET` | yes      | `minLength=32` per `apps/server/.env.schema`. Generate with `openssl rand -base64 32`.                                    |
-| `CORS_ORIGIN`        | yes      | Must be the exact deployed web origin (e.g. `https://app.example.com`). Set after first deploy, then redeploy the server. |
+| Var                  | Required | Notes                                                                                                                                       |
+| -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BETTER_AUTH_SECRET` | yes      | `minLength=32` per `apps/server/.env.schema`. Generate with `openssl rand -base64 32`.                                                      |
+| `CORS_ORIGIN`        | yes      | Must be the exact deployed web origin (e.g. `https://app.example.com`). Set after first deploy, then redeploy the server.                   |
+| `OWNER_EMAIL`        | yes      | Login email of the only account that can manage the calendar and read meeting requests. Keep it in `apps/server/.env`: this repo is public. |
 
 Web worker:
 
@@ -49,6 +50,10 @@ Web worker:
 
 Worker code reads native bindings; the varlock-generated `src/env.ts` files are for the
 Node/Bun deployment process only.
+
+## Meeting requests
+
+Sign-up is disabled, because visitors never need an account and `OWNER_EMAIL` must not be claimable. Requests appear in `/dashboard`; there is no email notification, so check it there. Meeting hours, lengths and the booking window are constants in `packages/schedule/src/availability.ts` and `free-time.ts`.
 
 ## Deploy commands
 
