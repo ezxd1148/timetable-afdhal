@@ -187,8 +187,17 @@ export function ClassCalendar() {
     };
   });
 
-  const goToPreviousWeek = () => setWeekMondayISO((iso) => addDays(iso, -7));
-  const goToNextWeek = () => setWeekMondayISO((iso) => addDays(iso, 7));
+  const drawnPersonalEventsCount = days.reduce((sum, day) => sum + day.personalEvents.length, 0);
+
+  const shiftWeek = (deltaDays: number) => {
+    // Keep the selected day inside the visible week; null means "today".
+    if (focusedDateISO !== null) {
+      setSelectedDateISO(addDays(focusedDateISO, deltaDays));
+    }
+    setWeekMondayISO((iso) => addDays(iso, deltaDays));
+  };
+  const goToPreviousWeek = () => shiftWeek(-7);
+  const goToNextWeek = () => shiftWeek(7);
   const jumpToDate = (dateISO: string) => {
     setSelectedDateISO(dateISO);
     setWeekMondayISO(getWeekMondayFromISO(dateISO));
@@ -227,6 +236,31 @@ export function ClassCalendar() {
         <p className="rounded-lg border border-dashed px-4 py-3 text-center text-sm text-muted-foreground">
           No classes on weekends — pick a weekday to see its schedule.
         </p>
+      )}
+
+      {personalEventsQuery.isPending && (
+        <p
+          aria-live="polite"
+          className="rounded-lg border px-4 py-3 text-center text-sm text-muted-foreground"
+        >
+          Loading events for this week…
+        </p>
+      )}
+
+      {personalEventsQuery.isError && (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 text-center text-sm"
+        >
+          <span className="text-destructive">Busy times unavailable.</span>
+          <button
+            type="button"
+            className="underline underline-offset-2 hover:text-foreground"
+            onClick={() => personalEventsQuery.refetch()}
+          >
+            Retry
+          </button>
+        </div>
       )}
 
       {/* Mobile: stacked day tabs and a single-day timeline. */}
@@ -376,25 +410,12 @@ export function ClassCalendar() {
           className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
           aria-live="polite"
         >
-          {personalEventsQuery.isPending && <span>Loading personal events…</span>}
-          {personalEventsQuery.isError && (
-            <span>
-              <span className="text-destructive">Couldn&apos;t load personal events.</span>{" "}
-              <button
-                type="button"
-                className="underline underline-offset-2 hover:text-foreground"
-                onClick={() => personalEventsQuery.refetch()}
-              >
-                Retry
-              </button>
-            </span>
-          )}
           {personalEventsQuery.isSuccess && (
             <>
               <span>
-                {personalEvents.length === 0
-                  ? "No personal events this week"
-                  : `${personalEvents.length} personal ${personalEvents.length === 1 ? "event" : "events"} this week`}
+                {drawnPersonalEventsCount === 0
+                  ? "No personal events shown this week"
+                  : `${drawnPersonalEventsCount} personal ${drawnPersonalEventsCount === 1 ? "event" : "events"} shown this week`}
               </span>
               <span className="tabular-nums">
                 Updated {formatClockInZone(personalEventsQuery.dataUpdatedAt)}
