@@ -2,8 +2,8 @@ import type { ClassOccurrence } from "./generate-occurrences";
 import { formatTimeRange, timeToMinutes } from "./schedule-utils";
 
 /** Window in which free time is reported, matching the calendar grid. */
-export const FREE_TIME_START = "08:00";
-export const FREE_TIME_END = "19:00";
+export const FREE_TIME_START = "07:00";
+export const FREE_TIME_END = "23:00";
 
 export type FreeSlot = {
   startTime: string; // "HH:mm"

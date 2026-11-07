@@ -3,6 +3,8 @@
     "frontend-design@anthropic-plugin-directory": true,
     "context7@anthropic-plugin-directory": true,
     "playwright@anthropic-plugin-directory": true,
-    "codex-dispatch@anthropic-plugin-directory": true
+    "codex-dispatch@anthropic-plugin-directory": true,
+    "remotion@anthropic-plugin-directory": true,
+    "figma@claude-plugins-official": true
   }
 }

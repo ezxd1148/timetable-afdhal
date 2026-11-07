@@ -33,16 +33,16 @@ export function ClassEvent({ occurrence, isPast = false, style, className }: Cla
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-md px-2 py-1.5 text-white",
+        "overflow-hidden rounded-md px-2.5 py-2 text-white",
         (isPast ? PAST_SESSION_COLORS : SESSION_COLORS)[session],
         className,
       )}
       style={style}
       title={`${courseCode}, ${session} with ${lecturer} in ${location}, ${formatTimeRange(startTime, endTime)}`}
     >
-      <p className="truncate font-display text-sm leading-tight font-bold">{courseCode}</p>
-      <p className="truncate text-xs leading-snug">{session}</p>
-      <p className="truncate text-xs leading-snug opacity-90">{location}</p>
+      <p className="truncate font-display text-base leading-tight font-bold">{courseCode}</p>
+      <p className="truncate text-sm leading-snug">{session}</p>
+      <p className="truncate text-sm leading-snug opacity-90">{location}</p>
     </div>
   );
 }

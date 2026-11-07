@@ -25,7 +25,7 @@ import { PersonalEvent } from "./personal-event";
 
 const START_MINUTES = timeToMinutes(FREE_TIME_START);
 const END_MINUTES = timeToMinutes(FREE_TIME_END);
-const HOUR_HEIGHT = 60;
+const HOUR_HEIGHT = 76;
 const GRID_HEIGHT = ((END_MINUTES - START_MINUTES) / 60) * HOUR_HEIGHT;
 const MIN_BLOCK_HEIGHT = 34;
 const HOURS = Array.from(
@@ -101,23 +101,23 @@ export function WeekGrid({
   const showNowLine = nowMinutes >= START_MINUTES && nowMinutes <= END_MINUTES;
 
   return (
-    <div className="hidden overflow-x-auto rounded-lg border bg-card md:block">
+    <div className="hidden overflow-x-auto rounded-lg border bg-card md:block lg:overflow-visible">
       <div className="grid min-w-[720px] grid-cols-[3.25rem_repeat(7,minmax(0,1fr))]">
-        <div className="sticky left-0 z-20 border-b bg-card" />
+        <div className="sticky top-0 left-0 z-30 border-b bg-card" />
         {days.map(({ dateISO, weekday, isToday, isPast }) => (
           <div
             key={dateISO}
             className={cn(
-              "flex items-baseline gap-1.5 border-b border-l px-2 py-2",
+              "sticky top-0 z-20 flex items-baseline gap-1.5 border-b border-l bg-card px-3 py-3",
               isPast && "text-muted-foreground",
             )}
           >
-            <span className={cn("text-sm", isToday && "font-semibold text-primary")}>
+            <span className={cn("text-base", isToday && "font-semibold text-primary")}>
               {DAY_LABELS[weekday - 1]}
             </span>
             <span
               className={cn(
-                "font-display text-2xl leading-none font-bold tabular-nums",
+                "font-display text-3xl leading-none font-bold tabular-nums",
                 isToday && "text-primary",
               )}
             >
